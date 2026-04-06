@@ -1,8 +1,15 @@
 import sqlite3
 import csv
 
-conn = sqlite3.connect(':memory:')
+conn = sqlite3.connect('students.db')
 cursor = conn.cursor()
+
+def load_csv_to_table(cursor, csv_path, table, columns):
+    with open(csv_path, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        rows = [tuple(row[col] for col in columns) for row in reader]
+    placeholders = ", ".join("?" * len(columns))
+    cursor.executemany(f"INSERT INTO {table} VALUES ({placeholders})", rows)
 
 cursor.executescript("""        
     CREATE TABLE уровень_обучения (
@@ -26,20 +33,11 @@ cursor.executescript("""
         имя VARCHAR(50),
         отчество VARCHAR(50),
         средний_балл INTEGER);
-        
-    INSERT INTO уровень_обучения VALUES (1, 'Бакалавриат');
-    INSERT INTO уровень_обучения VALUES (2, 'Магистратура');
-    INSERT INTO уровень_обучения VALUES (3, 'Аспирантура');
-
-    INSERT INTO направления VALUES (1, 'Прикладная Информатика');
-    INSERT INTO направления VALUES (2, 'Туризм');
-    INSERT INTO направления VALUES (3, 'Реклама');
-    INSERT INTO направления VALUES (4, 'Управление персоналом');
-
-    INSERT INTO типы_обучения VALUES (1, 'Очное');
-    INSERT INTO типы_обучения VALUES (2, 'Заочное');
-    INSERT INTO типы_обучения VALUES (3, 'Вечерняя');
 """)
+
+load_csv_to_table(cursor, "levels.csv", "уровень_обучения", ["id_уровня", "название"])
+load_csv_to_table(cursor, "study_types.csv", "типы_обучения", ["id_типа", "название"])
+load_csv_to_table(cursor, "routes.csv", "направления", ["id_направления", "название"])
 
 with open('students.csv', encoding="utf-8") as f:
     reader = csv.DictReader(f)
